@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Aion — API spec agent</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #0f1419;
+            --panel: #1a2332;
+            --text: #e7ecf3;
+            --muted: #8b98a5;
+            --accent: #3d9eff;
+            --border: #2d3a4d;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(160deg, #0b0f14 0%, #121a24 50%, #0f1419 100%);
+            color: var(--text);
+        }
+        .wrap { max-width: 920px; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+        h1 { font-weight: 650; letter-spacing: -0.02em; margin: 0 0 0.35rem; font-size: 1.75rem; }
+        p.lead { color: var(--muted); margin: 0 0 1.75rem; line-height: 1.55; }
+        .card {
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+        label.file-label {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+        input[type=file] {
+            padding: 0.75rem;
+            border-radius: 8px;
+            border: 1px dashed var(--border);
+            background: rgba(0,0,0,.2);
+            color: var(--muted);
+        }
+        .hint { font-size: 0.85rem; color: var(--muted); }
+        button {
+            margin-top: 1rem;
+            padding: 0.65rem 1.25rem;
+            border-radius: 8px;
+            border: none;
+            background: var(--accent);
+            color: #061018;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        pre {
+            white-space: pre-wrap;
+            word-break: break-word;
+            font-size: 0.78rem;
+            line-height: 1.45;
+            padding: 1rem;
+            border-radius: 8px;
+            background: #0b0f14;
+            border: 1px solid var(--border);
+            max-height: 420px;
+            overflow: auto;
+        }
+        .paths { font-size: 0.9rem; color: var(--muted); margin: 0.5rem 0 1rem; white-space: pre-line; }
+        .err { color: #ff8a8a; font-size: 0.95rem; }
+        .pill {
+            display: inline-block;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 0.2rem 0.5rem;
+            border-radius: 999px;
+            background: rgba(61, 158, 255, 0.15);
+            color: var(--accent);
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="pill">Local RAG · Ollama</div>
+    <h1>Requirement documents → API specification</h1>
+    <p class="lead">
+        Upload BRDs, understanding documents, and data-field spreadsheets (PDF, Word, Excel).
+        The agent indexes them with embeddings, retrieves relevant passages, and writes a JSON API spec plus a Word copy under the <strong>Output</strong> folder.
+    </p>
+
+    <div class="card">
+        <label class="file-label">
+            <span>Documents</span>
+            <input id="files" type="file" multiple="multiple"
+                   accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
+            <span class="hint">Multiple files supported. Ensure Ollama is running with <code>llama3.2</code> and <code>nomic-embed-text</code>.</span>
+        </label>
+        <button type="button" id="run">Generate API specification</button>
+    </div>
+
+    <div class="card" id="outPanel" hidden>
+        <h2 style="margin:0 0 0.75rem;font-size:1.1rem;">Result</h2>
+        <div class="paths" id="paths"></div>
+        <pre id="jsonOut"></pre>
+    </div>
+
+    <p id="err" class="err" hidden></p>
+</div>
+<script>
+    const filesEl = document.getElementById('files');
+    const runBtn = document.getElementById('run');
+    const outPanel = document.getElementById('outPanel');
+    const jsonOut = document.getElementById('jsonOut');
+    const pathsEl = document.getElementById('paths');
+    const errEl = document.getElementById('err');
+
+    runBtn.addEventListener('click', async () => {
+        errEl.hidden = true;
+        outPanel.hidden = true;
+        if (!filesEl.files.length) {
+            errEl.textContent = 'Choose at least one file.';
+            errEl.hidden = false;
+            return;
+        }
+        const fd = new FormData();
+        for (const f of filesEl.files) {
+            fd.append('files', f);
+        }
+        runBtn.disabled = true;
+        try {
+            const res = await fetch('/api/generate', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || res.statusText);
+            }
+            pathsEl.textContent = 'JSON: ' + data.jsonPath + '\nWord: ' + data.wordPath;
+            try {
+                jsonOut.textContent = JSON.stringify(JSON.parse(data.specJson), null, 2);
+            } catch {
+                jsonOut.textContent = data.specJson;
+            }
+            outPanel.hidden = false;
+        } catch (e) {
+            errEl.textContent = e.message || String(e);
+            errEl.hidden = false;
+        } finally {
+            runBtn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>

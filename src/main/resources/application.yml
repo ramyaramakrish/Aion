@@ -8,6 +8,17 @@ spring:
       max-request-size: 128MB
   thymeleaf:
     cache: false
+  ai:
+    openai:
+      api-key: ${GEMINI_API_KEY:}
+      base-url: https://generativelanguage.googleapis.com/v1beta/openai/
+      chat:
+        options:
+          model: gemini-2.5-flash
+          temperature: 0.7
+      embedding:
+        options:
+          model: text-embedding-004
 
 logging:
   level:

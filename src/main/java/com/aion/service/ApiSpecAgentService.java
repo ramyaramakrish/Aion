@@ -6,9 +6,10 @@ import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvi
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.stereotype.Service;
 
-// This service is part of the RAG/Ollama stack and is currently disabled to use a pure-Gemini implementation.
-// @Service
+// This service is now using Spring AI with Gemini via OpenAI compatibility
+@Service
 public class ApiSpecAgentService {
 
     private static final String SYSTEM_PROMPT = """

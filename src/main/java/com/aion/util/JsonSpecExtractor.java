@@ -2,27 +2,25 @@ package com.aion.util;
 
 public final class JsonSpecExtractor {
 
-    private JsonSpecExtractor() {}
+    private JsonSpecExtractor() {
+        // Utility class
+    }
 
-    public static String extractJsonObject(String raw) {
-        if (raw == null || raw.isBlank()) {
-            throw new IllegalArgumentException("Empty model response");
+    /**
+     * Extracts the first valid JSON object from a string that may contain markdown fences
+     * or other text.
+     *
+     * @param text The string potentially containing a JSON object.
+     * @return The extracted JSON object as a string, or the original text if no object is found.
+     */
+    public static String extractJsonObject(String text) {
+        if (text == null || text.isBlank()) {
+            return "{}";
         }
-        String s = raw.trim();
-        if (s.startsWith("```")) {
-            int fence = s.indexOf('\n');
-            if (fence > 0) {
-                s = s.substring(fence + 1).trim();
-            }
-            if (s.endsWith("```")) {
-                s = s.substring(0, s.length() - 3).trim();
-            }
-        }
-        int start = s.indexOf('{');
-        int end = s.lastIndexOf('}');
-        if (start < 0 || end <= start) {
-            throw new IllegalArgumentException("No JSON object found in model output");
-        }
-        return s.substring(start, end + 1);
+
+        int firstBrace = text.indexOf('{');
+        int lastBrace = text.lastIndexOf('}');
+
+        return (firstBrace != -1 && lastBrace != -1 && lastBrace > firstBrace) ? text.substring(firstBrace, lastBrace + 1) : text;
     }
 }

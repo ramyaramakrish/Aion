@@ -6,9 +6,9 @@ import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvi
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.stereotype.Service;
 
-@Service
+// This service is part of the RAG/Ollama stack and is currently disabled to use a pure-Gemini implementation.
+// @Service
 public class ApiSpecAgentService {
 
     private static final String SYSTEM_PROMPT = """
@@ -17,7 +17,9 @@ public class ApiSpecAgentService {
 
             Rules:
             - Output MUST be one JSON object only, no markdown fences, no commentary before or after.
-            - Base every field on the retrieved context; if something is unknown, use null or empty arrays, never invent unrelated domains.
+            - Base every field on the retrieved context.
+            - The user will provide a JSON template. You MUST replace all placeholder values (like "string", "string semver style", etc.) with concrete values from the context.
+            - If a value for a field cannot be found in the context, use null for single fields or an empty array [] for list fields.
             - Prefer concrete resource names, HTTP methods, paths, and field types suggested by the BRD, understanding docs, and data dictionaries.
             - Use the exact JSON shape described in the user message. All keys must be present.
             """;
@@ -137,8 +139,15 @@ public class ApiSpecAgentService {
             Fill arrays with as many items as the documents justify; use [] when none apply.
             """;
 
+    private static final String REPAIR_SYSTEM_PROMPT = """
+            You are a JSON repair utility. Your job is to fix malformed JSON and ensure it conforms to a schema.
+            - Output MUST be one JSON object only, no markdown fences, no commentary before or after.
+            - Preserve all useful information from the input JSON.
+            - Adhere to the key structure requested by the user.
+            """;
+
     private static final String REPAIR_PROMPT_TEMPLATE = """
-            You are fixing a JSON API specification to match a required schema.
+            The following JSON is broken or does not match the required schema. Please fix it.
 
             Input JSON (may have wrong/missing keys):
             %s
@@ -150,10 +159,7 @@ public class ApiSpecAgentService {
             - dataModels
             - nonFunctional
 
-            Rules:
-            - Preserve useful information from input JSON.
-            - If unknown, use null or [].
-            - Do not include markdown or explanations.
+            If a required key is missing from the input, add it with a `null` value for objects or an empty array `[]` for lists.
             """;
 
     private final ChatModel chatModel;
@@ -166,7 +172,7 @@ public class ApiSpecAgentService {
         var advisor = QuestionAnswerAdvisor.builder(vectorStore)
                 .searchRequest(SearchRequest.builder()
                         .topK(8)
-                        .similarityThreshold(0.2)
+                        .similarityThreshold(0.25)
                         .build())
                 .build();
 
@@ -203,7 +209,7 @@ public class ApiSpecAgentService {
         String raw = ChatClient.builder(chatModel)
                 .build()
                 .prompt()
-                .system(SYSTEM_PROMPT)
+                .system(REPAIR_SYSTEM_PROMPT)
                 .user(userMessage)
                 .call()
                 .content();

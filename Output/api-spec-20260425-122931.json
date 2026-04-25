@@ -1,0 +1,71 @@
+{
+  "meta" : {
+    "title" : "NACH Unified layer BRD V1.0",
+    "version" : "V1.0",
+    "sources" : [ "NACH Unified layer BRD V1.0.docx" ]
+  },
+  "summary" : "The proposed solution enables government agencies to upload scheme rules through API, and the Unified layer will store the record; Banks can fetch scheme construct information for use in the CBDC ecosystem.",
+  "apis" : [ {
+    "name" : "Scheme Rule Management",
+    "basePath" : "/api/v1/schemerules",
+    "description" : "Government agencies can upload scheme rules through API, and the Unified layer will store the record; Banks can fetch scheme construct information for use in the CBDC ecosystem.",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/upload",
+      "summary" : "Upload scheme rule",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : "Scheme rule",
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Scheme rule uploaded successfully",
+          "bodySchema" : { }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid scheme rule format"
+      } ]
+    } ]
+  }, {
+    "name" : "Unified Layer Fund Unlock",
+    "basePath" : "/api/v1/fundunlock",
+    "description" : "The Unified Layer will enable government-triggered unlock requests for funds routed to banks.",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/request",
+      "summary" : "Trigger fund unlock request",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : "Fund unlock request",
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Fund unlock request triggered successfully",
+          "bodySchema" : { }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid fund unlock request"
+      } ]
+    } ]
+  } ],
+  "dataModels" : [ ],
+  "nonFunctional" : {
+    "security" : null,
+    "rateLimiting" : null,
+    "observability" : null
+  }
+}

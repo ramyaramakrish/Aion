@@ -1,0 +1,141 @@
+{
+  "meta" : {
+    "title" : "Unified Layer DBT API Specification",
+    "version" : "1.0",
+    "sources" : [ "NPCI Unified layer BRD V1.0.docx" ]
+  },
+  "summary" : "Provides a unified interface for accessing Unified Layer data and performing DBT operations.",
+  "apis" : [ {
+    "name" : "Get Unified Layer Beneficiary Details",
+    "basePath" : "/api/v1/unified-layer/beneficiary-details",
+    "description" : "Retrieves beneficiary details from the Unified Layer database based on scheme code and start date.",
+    "operations" : [ {
+      "method" : "GET",
+      "path" : "/beneficiary-details",
+      "summary" : "Retrieves beneficiary details for a specific scheme code and start date.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : { },
+        "bodySchema" : {
+          "required" : true,
+          "type" : "object",
+          "properties" : {
+            "scheme_code" : {
+              "type" : "string",
+              "required" : true
+            },
+            "start_date" : {
+              "type" : "string",
+              "format" : "date-time"
+            }
+          },
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "",
+          "bodySchema" : { }
+        }
+      },
+      "errors" : [ ]
+    } ]
+  }, {
+    "name" : "Get Unified Layer Scheme Related Information",
+    "basePath" : "/api/v1/unified-layer/scheme-related-information",
+    "description" : "Retrieves scheme related information from the Unified Layer database.",
+    "operations" : [ {
+      "method" : "GET",
+      "path" : "/scheme-related-information",
+      "summary" : "Retrieves scheme related information for a specific scheme code.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : { },
+        "bodySchema" : {
+          "required" : true,
+          "type" : "object",
+          "properties" : {
+            "scheme_code" : {
+              "type" : "string",
+              "required" : true
+            },
+            "start_date" : {
+              "type" : "string",
+              "format" : "date-time"
+            }
+          },
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "",
+          "bodySchema" : { }
+        }
+      },
+      "errors" : [ ]
+    } ]
+  }, {
+    "name" : "Locking/Unlocking Funds from Government to Unified Layer to Banks",
+    "basePath" : "/api/v1/unified-layer/lock-and-unlock-funds",
+    "description" : "Performs locking and unlocking of funds from the government to the Unified Layer and banks.",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/lock-and-unlock-funds",
+      "summary" : "Locks or unlocks funds from the government to the Unified Layer and banks.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : { },
+        "bodySchema" : {
+          "required" : true,
+          "type" : "object",
+          "properties" : {
+            "scheme_code" : {
+              "type" : "string",
+              "required" : true
+            },
+            "start_date" : {
+              "type" : "string",
+              "format" : "date-time"
+            },
+            "bank_iin" : {
+              "type" : "string"
+            }
+          },
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "",
+          "bodySchema" : { }
+        }
+      },
+      "errors" : [ ]
+    } ]
+  } ],
+  "dataModels" : [ {
+    "name" : "Unified Layer DBT API Model",
+    "description" : "Describes the Unified Layer database and its structure.",
+    "fields" : [ {
+      "name" : "scheme_code",
+      "type" : "string",
+      "required" : true,
+      "constraints" : "string or null",
+      "source" : "NPCI Unified layer BRD V1.0.docx"
+    }, {
+      "name" : "start_date",
+      "type" : "string",
+      "format" : "date-time",
+      "required" : false
+    } ]
+  } ],
+  "nonFunctional" : {
+    "security" : "RESTful API with secure authentication and authorization.",
+    "rateLimiting" : "Rate limiting on the number of requests per minute.",
+    "observability" : "Observability and logging capabilities for monitoring and troubleshooting."
+  }
+}

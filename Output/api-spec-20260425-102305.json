@@ -1,0 +1,121 @@
+{
+  "meta" : {
+    "title" : "NPCI Unified Layer API",
+    "version" : "1.0.0",
+    "sources" : [ "NACH Unified layer BRD  V1.0.docx" ]
+  },
+  "summary" : "API for NPCI Unified Layer",
+  "apis" : [ {
+    "name" : "Upload Scheme Rules",
+    "basePath" : "/api/v1/scheme-rules",
+    "description" : "Upload scheme rules for government agencies",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/scheme-rules",
+      "summary" : "Upload new scheme rule",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ {
+          "name" : "scheme_rule_id",
+          "type" : "string",
+          "required" : true,
+          "description" : "Unique identifier for the rule"
+        } ],
+        "pathParams" : [ {
+          "name" : "scheme_rule_id",
+          "type" : "string",
+          "description" : "Unique identifier for the scheme rule"
+        } ]
+      },
+      "responses" : {
+        "201" : {
+          "description" : "Scheme rule uploaded successfully",
+          "bodySchema" : { }
+        },
+        "400" : {
+          "description" : "Invalid or missing request data",
+          "errors" : [ {
+            "status" : 400,
+            "description" : "Please provide a valid scheme rule ID"
+          } ]
+        }
+      }
+    } ],
+    "errors" : [ ]
+  }, {
+    "name" : "Unlock Funds for CBDC Ecosystem",
+    "basePath" : "/api/v1/unlock-funds",
+    "description" : "Request to unlock funds from government to Unified Layer",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/unlock-funds",
+      "summary" : "Request to unlock funds for CBDC ecosystem",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ {
+          "name" : "bank_id",
+          "type" : "string",
+          "required" : true,
+          "description" : "Unique identifier for the bank"
+        }, {
+          "name" : "amount",
+          "type" : "integer",
+          "required" : false,
+          "constraints" : [ "positive integers" ]
+        } ],
+        "pathParams" : [ {
+          "name" : "bank_id",
+          "type" : "string",
+          "description" : "Unique identifier for the bank"
+        }, {
+          "name" : "amount",
+          "type" : "integer",
+          "description" : "Amount to unlock funds"
+        } ]
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Funds unlocked successfully",
+          "bodySchema" : { }
+        },
+        "400" : {
+          "description" : "Invalid or missing request data",
+          "errors" : [ {
+            "status" : 400,
+            "description" : "Please provide a valid bank ID and amount"
+          } ]
+        }
+      }
+    } ],
+    "errors" : [ ]
+  } ],
+  "dataModels" : [ {
+    "name" : "SchemeRule",
+    "description" : "Unique identifier for the scheme rule",
+    "fields" : [ {
+      "name" : "scheme_rule_id",
+      "type" : "string",
+      "required" : true,
+      "constraints" : "unique string"
+    }, {
+      "name" : "bank_id",
+      "type" : "string",
+      "description" : "Unique identifier for the bank",
+      "source" : "NACH Unified layer BRD  V1.0.docx"
+    } ]
+  }, {
+    "name" : "Amount",
+    "description" : "Amount to unlock funds",
+    "fields" : [ {
+      "name" : "amount",
+      "type" : "integer",
+      "required" : false,
+      "constraints" : [ "positive integers" ]
+    } ]
+  } ],
+  "nonFunctional" : {
+    "security" : "OAuth 2.0 with client credentials",
+    "rateLimiting" : "5 requests per minute",
+    "observability" : "Performance monitoring"
+  }
+}

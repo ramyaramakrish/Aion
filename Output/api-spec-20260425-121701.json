@@ -1,0 +1,89 @@
+{
+  "meta" : {
+    "title" : "NACH Unified Layer API",
+    "version" : "1.0",
+    "sources" : [ "NACH Unified layer BRD V1.0.docx" ]
+  },
+  "summary" : "Unified Layer API for NPCI's CBDC ecosystem, enabling government-triggered unlock requests for funds routed to banks.",
+  "apis" : [ {
+    "name" : "Government Scheme Management",
+    "basePath" : "/api/v1/schemes",
+    "description" : "API for managing scheme-related parameters and rules",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/upload-rule",
+      "summary" : "Upload a new government scheme rule",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : "Government scheme rule JSON schema",
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Rule uploaded successfully",
+          "bodySchema" : { }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid request format"
+      }, {
+        "status" : 500,
+        "description" : "Internal server error"
+      } ]
+    }, {
+      "method" : "GET",
+      "path" : "/fetch-rule/{ruleId}",
+      "summary" : "Fetch a government scheme rule by ID",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ {
+          "name" : "ruleId",
+          "type" : "string"
+        } ],
+        "bodySchema" : {
+          "description" : "None",
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Rule fetched successfully",
+          "bodySchema" : { }
+        }
+      },
+      "errors" : [ {
+        "status" : 404,
+        "description" : "Rule not found"
+      }, {
+        "status" : 500,
+        "description" : "Internal server error"
+      } ]
+    } ]
+  } ],
+  "dataModels" : [ {
+    "name" : "GovernmentScheme",
+    "description" : "Government scheme rule data model",
+    "fields" : [ {
+      "name" : "ruleId",
+      "type" : "string",
+      "required" : true,
+      "constraints" : "unique identifier for the government scheme rule"
+    }, {
+      "name" : "schemeName",
+      "type" : "string",
+      "required" : true,
+      "source" : "NACH Unified layer BRD V1.0.docx"
+    } ]
+  } ],
+  "nonFunctional" : {
+    "security" : "OAuth 2.0",
+    "rateLimiting" : "5 requests per minute",
+    "observability" : "Prometheus and Grafana integration"
+  }
+}

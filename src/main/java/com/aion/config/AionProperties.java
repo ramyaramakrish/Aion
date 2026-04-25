@@ -10,7 +10,9 @@ public record AionProperties(
         Path documentsDir,
         Double docBuddySimilarityThreshold,
         String geminiApiKey,
-        String geminiModel
+        String geminiModel,
+        Double agentTemperature,
+        String agentSystemPrompt
 ) {
     public AionProperties {
         if (outputDir == null) {
@@ -23,7 +25,13 @@ public record AionProperties(
             docBuddySimilarityThreshold = 0.6d;
         }
         if (geminiModel == null || geminiModel.isBlank()) {
-            geminiModel = "gemini-1.5-flash";
+            geminiModel = "gemini-2.5-flash";
+        }
+        if (agentTemperature == null) {
+            agentTemperature = 0.7d;
+        }
+        if (agentSystemPrompt == null || agentSystemPrompt.isBlank()) {
+            agentSystemPrompt = "You are an intelligent assistant for the Aion platform.";
         }
     }
 }

@@ -1,6 +1,7 @@
 package com.aion.service;
 
 import com.aion.config.AionProperties;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.poi.xwpf.usermodel.ParagraphAlignment;
@@ -28,7 +29,10 @@ public class OutputWriterService {
 
     public OutputWriterService(AionProperties properties, ObjectMapper objectMapper) {
         this.properties = properties;
-        this.objectMapper = objectMapper;
+        this.objectMapper = objectMapper.copy()
+                .enable(JsonParser.Feature.ALLOW_TRAILING_COMMA)
+                .enable(JsonParser.Feature.ALLOW_SINGLE_QUOTES)
+                .enable(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES);
     }
 
     /** Pretty-prints JSON and persists .json + .docx under configured Output folder. */
@@ -62,7 +66,7 @@ public class OutputWriterService {
             XWPFRun subRun = sub.createRun();
             subRun.setItalic(true);
             subRun.setFontSize(10);
-            subRun.setText("Generated from requirement documents via RAG + local LLM (Ollama).");
+            subRun.setText("Generated from requirement documents via Google Gemini AI.");
 
             XWPFParagraph body = doc.createParagraph();
             XWPFRun run = body.createRun();

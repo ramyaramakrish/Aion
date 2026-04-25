@@ -5,19 +5,19 @@ import org.springframework.ai.embedding.EmbeddingModel;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
 import org.springframework.ai.vectorstore.SimpleVectorStore;
 import org.springframework.ai.vectorstore.VectorStore;
-import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Service
+// This service is part of the RAG/Ollama stack and is currently disabled to use a pure-Gemini implementation.
+// @Service
 public class RagIngestionService {
 
-    private static final int CHUNK_SIZE = 2000;
+    private static final int CHUNK_SIZE = 500;
     private static final int MIN_CHUNK_SIZE_CHARS = 350;
     private static final int MIN_CHUNK_LENGTH_TO_EMBED = 10;
-    private static final int MAX_NUM_CHUNKS = 120;
+    private static final int MAX_NUM_CHUNKS = 20;
 
     private final EmbeddingModel embeddingModel;
 

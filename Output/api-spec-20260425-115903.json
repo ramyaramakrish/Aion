@@ -1,0 +1,57 @@
+{
+  "meta" : {
+    "reqiPay" : {
+      "head" : {
+        "version" : "1.0",
+        "originatorId" : "HDFC",
+        "transactionId" : null,
+        "msgId" : null,
+        "timeStamp" : "2025-10-15 22:08:32.771"
+      },
+      "transactionDetails" : {
+        "achReferenceId" : "<for INW and RES>",
+        "product" : "APB/ACHCR/ACHDR",
+        "subproduct" : [ "SAL", "APB", "ACHCR", "ACHDR" ],
+        "transactionType" : [ "INP", "INW", "RET", "RES" ],
+        "amount" : null,
+        "umrn" : null,
+        "callbackURL" : "https://bankip:port/inach/v1.0/resiPay?txnId=HDFC78989876543456789087654345678765"
+      },
+      "sender" : {
+        "bankCode" : "HDFC",
+        "referenceId" : null,
+        "bankIdType" : "IFSC",
+        "bankIdentifier" : null,
+        "narration" : "Pension scheme",
+        "corporateUserNumber" : null
+      },
+      "receiver" : {
+        "bankCode" : [ "SBIN" ],
+        "referenceId" : [ ],
+        "bankIdType" : null,
+        "bankIdentifier" : null,
+        "accountType" : [ ]
+      },
+      "additionalData" : {
+        "MordRefInfo" : null,
+        "MordGroupId" : null,
+        "MordFtoNumber" : null,
+        "govSchemeType" : [ ],
+        "govBeneficiaryType" : [ ],
+        "govcentralShare" : null,
+        "govstateShare" : null
+      },
+      "secureData" : {
+        "senderAccountNumber" : null,
+        "senderCorporateUserName" : null,
+        "receiverAccountNumber" : null,
+        "receiverAadhaarNumber" : null,
+        "receiverName" : null
+      }
+    }
+  },
+  "summary" : null,
+  "apis" : [ ],
+  "dataModels" : [ ],
+  "nonFunctional" : [ ]
+}

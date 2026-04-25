@@ -1,0 +1,992 @@
+{
+  "meta" : {
+    "title" : "NACH Unified layer - BRD",
+    "version" : "1.0",
+    "sources" : [ "NACH Unified layer BRD V1.0.docx" ]
+  },
+  "summary" : "The Unified Layer is proposed as a central, interoperable platform for government-to-bank communication, designed to standardize interactions for data upload, lookup, update, and transaction initiation. It aims to reduce the complexity of one-to-one integrations for Direct Benefit Transfer (DBT) and welfare schemes, leveraging Central Bank Digital Currency (CBDC) for secure, controlled, and auditable information exchange.",
+  "apis" : [ {
+    "name" : "Government Beneficiary Management",
+    "basePath" : "/api/v1/gov/beneficiaries",
+    "description" : "APIs for Government agencies to manage DBT beneficiary details in the Unified Layer, including uploading new records and updating their eligibility status.",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/",
+      "summary" : "Upload new DBT beneficiary details to the Unified Layer.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : "Part A (Beneficiary Data) for creation. Each record is assigned a UUID by the Unified Layer. Aadhaar number is stored as SHA256 hash.",
+          "exampleFields" : {
+            "beneficiary_aadhaar_hash" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "other_id_type" : "PAN",
+            "other_id" : "ABCDE1234F",
+            "beneficiary_mobile" : "9876543210",
+            "status" : "Active",
+            "scheme_code" : "SCH123",
+            "eligible_till" : "2027-12-31",
+            "uploading_entity_id" : "GOV_AGENCY_1",
+            "uploading_entity_type" : "State Government"
+          }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Beneficiary records successfully uploaded, each assigned a UUID.",
+          "bodySchema" : {
+            "message" : "Beneficiary records uploaded successfully",
+            "uuids" : [ "a1b2c3d4-e5f6-7890-1234-567890abcdef" ]
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid input data or missing mandatory fields."
+      } ]
+    }, {
+      "method" : "PATCH",
+      "path" : "/{beneficiaryId}",
+      "summary" : "Update the eligibility status (active/inactive) of an existing DBT beneficiary record.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ {
+          "name" : "beneficiaryId",
+          "type" : "string (UUID)",
+          "description" : "Unique identifier (UUID) of the beneficiary record for modification."
+        } ],
+        "bodySchema" : {
+          "description" : "Only the status field is allowed for updates via this API.",
+          "exampleFields" : {
+            "status" : "Inactive"
+          }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Beneficiary status successfully updated.",
+          "bodySchema" : {
+            "message" : "Beneficiary status updated successfully",
+            "beneficiaryId" : "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+            "newStatus" : "Inactive"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid beneficiaryId or status value."
+      }, {
+        "status" : 404,
+        "description" : "Beneficiary record not found."
+      } ]
+    } ]
+  }, {
+    "name" : "Bank Beneficiary Lookup",
+    "basePath" : "/api/v1/bank/beneficiaries",
+    "description" : "API for Banks to query the Unified Layer to confirm beneficiary eligibility for CBDC schemes.",
+    "operations" : [ {
+      "method" : "GET",
+      "path" : "/eligibility",
+      "summary" : "Query beneficiary eligibility status using hashed Aadhaar, other ID, or mobile number. Any one identifier is mandatory.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ {
+          "name" : "beneficiary_aadhaar_hash",
+          "type" : "string",
+          "required" : false,
+          "description" : "SHA256 hash of Aadhaar number."
+        }, {
+          "name" : "other_id_type",
+          "type" : "string",
+          "required" : false,
+          "description" : "Type of other ID (e.g., PAN, Passport)."
+        }, {
+          "name" : "other_id",
+          "type" : "string",
+          "required" : false,
+          "description" : "Value of other ID."
+        }, {
+          "name" : "beneficiary_mobile",
+          "type" : "string",
+          "required" : false,
+          "description" : "Mobile number of the beneficiary."
+        } ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : null,
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Beneficiary eligibility details from Part A (Beneficiary Data).",
+          "bodySchema" : {
+            "status" : "Active",
+            "scheme_code" : "SCH123",
+            "eligible_till" : "2027-12-31",
+            "uploading_entity_id" : "GOV_AGENCY_1",
+            "uploading_entity_type" : "State Government"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid request: no identifier provided or multiple identifiers conflicting."
+      }, {
+        "status" : 404,
+        "description" : "Beneficiary not found or not eligible."
+      } ]
+    } ]
+  }, {
+    "name" : "Government Scheme Management",
+    "basePath" : "/api/v1/gov/schemes",
+    "description" : "APIs for Government agencies to manage DBT scheme-related information and Rule IDs in the Unified Layer.",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/",
+      "summary" : "Upload new DBT scheme related information (Part B PCBDC parameters) to the Unified Layer.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : "Scheme details, uniquely identified by scheme_code and start_date. A UUID is assigned by the Unified Layer.",
+          "exampleFields" : {
+            "scheme_code" : "SCH456",
+            "start_date" : "2026-04-01",
+            "mcc" : "7299",
+            "vpa" : "merchant@bank",
+            "geographic_parameters" : {
+              "location_name" : "Mumbai",
+              "latitude" : "19.0760",
+              "longitude" : "72.8777",
+              "buffer_radius_km" : 5
+            },
+            "other_constraints" : {
+              "usage_limit_amount" : 1000,
+              "usage_limit_frequency" : "monthly"
+            }
+          }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Scheme details successfully uploaded, with a generated UUID.",
+          "bodySchema" : {
+            "message" : "Scheme details uploaded successfully",
+            "uuid" : "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid input data or duplicate scheme_code + start_date combination."
+      } ]
+    }, {
+      "method" : "PATCH",
+      "path" : "/{schemeCode}/{startDate}",
+      "summary" : "Modify existing DBT scheme related information (Part B PCBDC parameters) based on scheme code and start date.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ {
+          "name" : "schemeCode",
+          "type" : "string",
+          "description" : "Unique identifier for the scheme."
+        }, {
+          "name" : "startDate",
+          "type" : "string (date)",
+          "description" : "Start date for the specific scheme version."
+        } ],
+        "bodySchema" : {
+          "description" : "Partial update for scheme parameters (Part B).",
+          "exampleFields" : {
+            "mcc" : "5411",
+            "geographic_parameters" : {
+              "buffer_radius_km" : 10
+            }
+          }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Scheme details successfully modified.",
+          "bodySchema" : {
+            "message" : "Scheme details updated successfully",
+            "schemeCode" : "SCH456",
+            "startDate" : "2026-04-01"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid update request or data."
+      }, {
+        "status" : 404,
+        "description" : "Scheme not found for the given combination."
+      } ]
+    }, {
+      "method" : "PATCH",
+      "path" : "/{schemeCode}/{startDate}/rule-id",
+      "summary" : "Delete (inactivate) the Rule ID associated with a scheme record, using scheme code and start date.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ {
+          "name" : "schemeCode",
+          "type" : "string",
+          "description" : "Unique identifier for the scheme."
+        }, {
+          "name" : "startDate",
+          "type" : "string (date)",
+          "description" : "Start date for the specific scheme version."
+        } ],
+        "bodySchema" : {
+          "description" : "Request to set Rule ID status to 'Inactive' for deletion.",
+          "exampleFields" : {
+            "type" : "2",
+            "rule_id_status" : "Inactive"
+          }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Rule ID status successfully set to Inactive.",
+          "bodySchema" : {
+            "message" : "Rule ID deleted successfully",
+            "schemeCode" : "SCH456",
+            "startDate" : "2026-04-01"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid request for rule ID deletion."
+      }, {
+        "status" : 404,
+        "description" : "Scheme or Rule ID not found."
+      } ]
+    }, {
+      "method" : "GET",
+      "path" : "/rule-ids",
+      "summary" : "Retrieve and verify Rule IDs created or updated by Banks for a given scheme, based on scheme_code and/or start_date.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ {
+          "name" : "scheme_code",
+          "type" : "string",
+          "required" : true,
+          "description" : "Unique identifier for the scheme."
+        }, {
+          "name" : "start_date",
+          "type" : "string (date)",
+          "required" : false,
+          "description" : "Start date for a specific scheme version. Optional; if absent, all versions for the scheme_code are returned."
+        } ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : null,
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "List of scheme records with associated Rule IDs and their statuses.",
+          "bodySchema" : {
+            "description" : "Scheme records including Rule ID and status.",
+            "exampleFields" : [ {
+              "scheme_code" : "SCH456",
+              "start_date" : "2026-04-01",
+              "rule_id" : "BANKRULE001",
+              "rule_id_status" : "Active"
+            } ]
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Missing scheme_code parameter."
+      }, {
+        "status" : 404,
+        "description" : "No scheme records found for the given criteria."
+      } ]
+    } ]
+  }, {
+    "name" : "Bank Scheme Management",
+    "basePath" : "/api/v1/bank/schemes",
+    "description" : "APIs for Banks to query scheme details and update Rule IDs in the Unified Layer for CBDC rule enforcement.",
+    "operations" : [ {
+      "method" : "GET",
+      "path" : "/",
+      "summary" : "Retrieve complete scheme construct information from the Unified Layer to create CBDC rules, using scheme_code and/or start_date.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ {
+          "name" : "scheme_code",
+          "type" : "string",
+          "required" : true,
+          "description" : "Unique identifier for the scheme."
+        }, {
+          "name" : "start_date",
+          "type" : "string (date)",
+          "required" : false,
+          "description" : "Start date for a specific scheme version. Optional; if absent, all versions for the scheme_code are returned."
+        } ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : null,
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Scheme construct details (Part B PCBDC parameters), including rule_id if available.",
+          "bodySchema" : {
+            "description" : "List of scheme details or a single scheme detail based on query parameters.",
+            "exampleFields" : [ {
+              "uuid" : "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+              "scheme_code" : "SCH456",
+              "start_date" : "2026-04-01",
+              "mcc" : "7299",
+              "vpa" : "merchant@bank",
+              "geographic_parameters" : {
+                "location_name" : "Mumbai",
+                "latitude" : "19.0760",
+                "longitude" : "72.8777",
+                "buffer_radius_km" : 5
+              },
+              "other_constraints" : {
+                "usage_limit_amount" : 1000,
+                "usage_limit_frequency" : "monthly"
+              },
+              "rule_id" : "BANKRULE001",
+              "rule_creator_iin" : "123456",
+              "rule_id_status" : "Active"
+            } ]
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Missing scheme_code parameter."
+      }, {
+        "status" : 404,
+        "description" : "No scheme records found for the given criteria."
+      } ]
+    }, {
+      "method" : "PATCH",
+      "path" : "/{schemeId}/rule-id",
+      "summary" : "Banks update or set the Rule ID field for a specific scheme record (identified by UUID).",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ {
+          "name" : "schemeId",
+          "type" : "string (UUID)",
+          "description" : "Unique identifier (UUID) of the scheme record."
+        } ],
+        "bodySchema" : {
+          "description" : "Rule ID and Rule Creator Bank IIN to be associated with the scheme. Update logic depends on existing rule_id and rule_creator_iin.",
+          "exampleFields" : {
+            "rule_id" : "BANKRULE002",
+            "rule_creator_iin" : "123456"
+          }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Rule ID successfully updated for the scheme.",
+          "bodySchema" : {
+            "message" : "Rule ID updated successfully",
+            "schemeId" : "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+            "rule_id" : "BANKRULE002"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid request, or a different bank attempted to update an owned rule ID."
+      }, {
+        "status" : 404,
+        "description" : "Scheme record not found."
+      } ]
+    } ]
+  }, {
+    "name" : "Government Fund Control",
+    "basePath" : "/api/v1/gov/fund-controls",
+    "description" : "API for Government agencies to trigger unlock or lock requests for merchant CBDC funds.",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/",
+      "summary" : "Government initiates an unlock or lock request for merchant CBDC funds, which the Unified Layer routes to destination banks.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : "Fund unlock/lock request details based on Part C (Unlock Request).",
+          "exampleFields" : {
+            "scheme_code" : "SCH789",
+            "sending_entity_id" : "GOV_ENTITY_A",
+            "sending_entity_type" : "Central Government",
+            "receiver_bank_iin" : "123456",
+            "total_transactions_count" : 1,
+            "transactions" : [ {
+              "payee_info" : {
+                "identifier_type" : "hashed aadhar",
+                "identifier_value" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "payer_info" : null,
+              "amount" : 500,
+              "currency" : "INR",
+              "additional_details_1" : "Merchant promo",
+              "additional_details_2" : null
+            } ],
+            "action" : "Unlock",
+            "meta" : {
+              "additional_information_1" : "Campaign 2026",
+              "additional_information_2" : null
+            }
+          }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Fund unlock/lock request successfully received and routing initiated by the Unified Layer.",
+          "bodySchema" : {
+            "message" : "Fund control request initiated",
+            "transactionId" : "f1e2d3c4-b5a6-9876-5432-10fedcba9876"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid request data or missing mandatory fields."
+      } ]
+    } ]
+  }, {
+    "name" : "Unified Layer Fund Notification",
+    "basePath" : "/api/v1/ul/fund-notifications",
+    "description" : "Internal API used by the Unified Layer to route fund unlock/lock requests to the relevant destination banks.",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/",
+      "summary" : "Unified Layer forwards a fund unlock/lock request to a destination bank.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : "Fund unlock/lock request details, forwarded from Government.",
+          "exampleFields" : {
+            "scheme_code" : "SCH789",
+            "sending_entity_id" : "GOV_ENTITY_A",
+            "sending_entity_type" : "Central Government",
+            "receiver_bank_iin" : "123456",
+            "total_transactions_count" : 1,
+            "transactions" : [ {
+              "payee_info" : {
+                "identifier_type" : "hashed aadhar",
+                "identifier_value" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "payer_info" : null,
+              "amount" : 500,
+              "currency" : "INR",
+              "additional_details_1" : "Merchant promo",
+              "additional_details_2" : null
+            } ],
+            "action" : "Unlock",
+            "meta" : {
+              "additional_information_1" : "Campaign 2026",
+              "additional_information_2" : null
+            }
+          }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Fund unlock/lock request successfully routed to the bank.",
+          "bodySchema" : {
+            "message" : "Fund control request routed",
+            "transactionId" : "f1e2d3c4-b5a6-9876-5432-10fedcba9876"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid request or routing error."
+      }, {
+        "status" : 500,
+        "description" : "Internal server error at Unified Layer."
+      } ]
+    } ]
+  }, {
+    "name" : "Bank Fund Control Response",
+    "basePath" : "/api/v1/bank/fund-responses",
+    "description" : "API for Banks to respond with the status of fund unlock/lock requests back to the Unified Layer.",
+    "operations" : [ {
+      "method" : "POST",
+      "path" : "/",
+      "summary" : "Banks submit the status response for a fund unlock/lock request to the Unified Layer.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : "Response details for a fund unlock/lock request based on Part C (Unlock Response).",
+          "exampleFields" : {
+            "scheme_code" : "SCH789",
+            "sending_entity_id" : "GOV_ENTITY_A",
+            "sending_entity_type" : "Central Government",
+            "receiver_bank_iin" : "123456",
+            "total_transactions_count" : 1,
+            "transactions" : [ {
+              "response_status" : "Success",
+              "transaction_id" : "BANKTXN001",
+              "additional_details_1" : null,
+              "payee_info" : {
+                "identifier_type" : "hashed aadhar",
+                "identifier_value" : "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+              },
+              "payer_info" : null,
+              "amount" : 500,
+              "currency" : "INR",
+              "meta" : {
+                "additional_information_1" : "Fund released",
+                "additional_information_2" : null
+              }
+            } ]
+          }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Fund control status response successfully received by the Unified Layer.",
+          "bodySchema" : {
+            "message" : "Fund control response received",
+            "status" : "Acknowledged"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 400,
+        "description" : "Invalid response data or malformed request."
+      } ]
+    } ]
+  }, {
+    "name" : "Transaction Status",
+    "basePath" : "/api/v1/transactions",
+    "description" : "Meta API to check the status of a specific transaction initiated between entities, particularly in timeout scenarios.",
+    "operations" : [ {
+      "method" : "GET",
+      "path" : "/{transactionId}/status",
+      "summary" : "Retrieve the current status of a transaction by its unique identifier.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ {
+          "name" : "transactionId",
+          "type" : "string",
+          "description" : "Unique identifier of the transaction."
+        } ],
+        "bodySchema" : {
+          "description" : null,
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "Current status of the transaction.",
+          "bodySchema" : {
+            "transactionId" : "f1e2d3c4-b5a6-9876-5432-10fedcba9876",
+            "status" : "Completed",
+            "last_updated" : "2026-03-17T10:30:00Z"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 404,
+        "description" : "Transaction not found."
+      } ]
+    } ]
+  }, {
+    "name" : "System Health",
+    "basePath" : "/api/v1/health",
+    "description" : "Meta API to check the operational status (heartbeat) of the Unified Layer.",
+    "operations" : [ {
+      "method" : "GET",
+      "path" : "/",
+      "summary" : "Checks if the system is operational and responsive.",
+      "request" : {
+        "contentType" : "application/json",
+        "queryParams" : [ ],
+        "pathParams" : [ ],
+        "bodySchema" : {
+          "description" : null,
+          "exampleFields" : { }
+        }
+      },
+      "responses" : {
+        "200" : {
+          "description" : "System is operational.",
+          "bodySchema" : {
+            "status" : "UP",
+            "timestamp" : "2026-03-17T10:35:00Z"
+          }
+        }
+      },
+      "errors" : [ {
+        "status" : 503,
+        "description" : "Service Unavailable - System is experiencing issues."
+      } ]
+    } ]
+  } ],
+  "dataModels" : [ {
+    "name" : "Beneficiary",
+    "description" : "Direct Benefit Transfer (DBT) beneficiary details stored in the Unified Layer, used by Banks to check eligibility for MIN-KYC wallets.",
+    "fields" : [ {
+      "name" : "uuid",
+      "type" : "string (UUID)",
+      "required" : true,
+      "constraints" : "Unique identifier assigned by Unified Layer",
+      "source" : "Detailed approach: Collecting beneficiary details"
+    }, {
+      "name" : "beneficiary_aadhaar_hash",
+      "type" : "string",
+      "required" : false,
+      "constraints" : "SHA256 hash",
+      "source" : "Requirement 1.1.e"
+    }, {
+      "name" : "other_id_type",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 1.2.1"
+    }, {
+      "name" : "other_id",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 1.2.1"
+    }, {
+      "name" : "beneficiary_mobile",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 1.2.1"
+    }, {
+      "name" : "status",
+      "type" : "string",
+      "required" : true,
+      "constraints" : "Active|Inactive",
+      "source" : "Requirement 1.2.2"
+    }, {
+      "name" : "scheme_code",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 1.2.2"
+    }, {
+      "name" : "eligible_till",
+      "type" : "string (date)",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 1.2.2"
+    }, {
+      "name" : "uploading_entity_id",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 1.2.2"
+    }, {
+      "name" : "uploading_entity_type",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 1.2.2"
+    } ]
+  }, {
+    "name" : "Scheme",
+    "description" : "DBT scheme related information and programmable CBDC (pCBDC) parameters, serving as a central repository for Government policies.",
+    "fields" : [ {
+      "name" : "uuid",
+      "type" : "string (UUID)",
+      "required" : true,
+      "constraints" : "Unique identifier assigned by Unified Layer",
+      "source" : "API for capturing scheme code"
+    }, {
+      "name" : "scheme_code",
+      "type" : "string",
+      "required" : true,
+      "constraints" : "Unique combination with start_date",
+      "source" : "Requirement 2.1.1"
+    }, {
+      "name" : "start_date",
+      "type" : "string (date)",
+      "required" : true,
+      "constraints" : "Unique combination with scheme_code",
+      "source" : "Requirement 2.1.1"
+    }, {
+      "name" : "mcc",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Collecting scheme related information"
+    }, {
+      "name" : "vpa",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Collecting scheme related information"
+    }, {
+      "name" : "geographic_parameters",
+      "type" : "object",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Collecting scheme related information"
+    }, {
+      "name" : "other_constraints",
+      "type" : "object",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Collecting scheme related information"
+    }, {
+      "name" : "rule_id",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 2.3.1"
+    }, {
+      "name" : "rule_creator_iin",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "API for updating Rule id - Rule ID Update Logic"
+    }, {
+      "name" : "rule_id_status",
+      "type" : "string",
+      "required" : true,
+      "constraints" : "Active|Inactive",
+      "source" : "API for modification of scheme code"
+    } ]
+  }, {
+    "name" : "FundUnlockRequest",
+    "description" : "Details for a Government-initiated request to unlock or lock merchant CBDC funds, routed via the Unified Layer.",
+    "fields" : [ {
+      "name" : "scheme_code",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1"
+    }, {
+      "name" : "sending_entity_id",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1"
+    }, {
+      "name" : "sending_entity_type",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1"
+    }, {
+      "name" : "receiver_bank_iin",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1"
+    }, {
+      "name" : "total_transactions_count",
+      "type" : "integer",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1 (Total transaction’s X)"
+    }, {
+      "name" : "transactions",
+      "type" : "array of FundUnlockTransaction",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1 (Transaction X)"
+    }, {
+      "name" : "action",
+      "type" : "string",
+      "required" : true,
+      "constraints" : "Unlock|Lock",
+      "source" : "Requirement 3.1.1 (Lock / Unlock)"
+    }, {
+      "name" : "meta",
+      "type" : "object",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1 (Additional information 1 & 2)"
+    } ]
+  }, {
+    "name" : "FundUnlockTransaction",
+    "description" : "Details for an individual transaction within a Government-initiated fund unlock/lock request.",
+    "fields" : [ {
+      "name" : "payee_info",
+      "type" : "object (Identifier)",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1 (Payee info)"
+    }, {
+      "name" : "payer_info",
+      "type" : "object (Identifier)",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1 (Payer (optional))"
+    }, {
+      "name" : "amount",
+      "type" : "number",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1 (Amount)"
+    }, {
+      "name" : "currency",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1 (Amount & currency)"
+    }, {
+      "name" : "additional_details_1",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1"
+    }, {
+      "name" : "additional_details_2",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1"
+    } ]
+  }, {
+    "name" : "Identifier",
+    "description" : "Generic structure for identifying a payee or payer within fund control requests.",
+    "fields" : [ {
+      "name" : "identifier_type",
+      "type" : "string",
+      "required" : true,
+      "constraints" : "hashed aadhar, mobile number, Other ID type",
+      "source" : "Requirement 3.1.1"
+    }, {
+      "name" : "identifier_value",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.1.1"
+    } ]
+  }, {
+    "name" : "FundUnlockResponse",
+    "description" : "Response details provided by a Bank to the Unified Layer regarding the status of a fund unlock/lock request, subsequently relayed to the Government.",
+    "fields" : [ {
+      "name" : "scheme_code",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1"
+    }, {
+      "name" : "sending_entity_id",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1"
+    }, {
+      "name" : "sending_entity_type",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1"
+    }, {
+      "name" : "receiver_bank_iin",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1"
+    }, {
+      "name" : "total_transactions_count",
+      "type" : "integer",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1 (Total transaction’s X)"
+    }, {
+      "name" : "transactions",
+      "type" : "array of FundUnlockTransactionResponse",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1 (Transactions)"
+    }, {
+      "name" : "meta",
+      "type" : "object",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1 (Additional information 1 & 2)"
+    } ]
+  }, {
+    "name" : "FundUnlockTransactionResponse",
+    "description" : "Individual transaction status and details within a Bank's fund unlock/lock response.",
+    "fields" : [ {
+      "name" : "response_status",
+      "type" : "string",
+      "required" : true,
+      "constraints" : "Success|Fail",
+      "source" : "Requirement 3.2.1 (Response)"
+    }, {
+      "name" : "transaction_id",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1 (Transaction ID)"
+    }, {
+      "name" : "additional_details_1",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1"
+    }, {
+      "name" : "additional_details_2",
+      "type" : "string",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1"
+    }, {
+      "name" : "payee_info",
+      "type" : "object (Identifier)",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1"
+    }, {
+      "name" : "payer_info",
+      "type" : "object (Identifier)",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1"
+    }, {
+      "name" : "amount",
+      "type" : "number",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1"
+    }, {
+      "name" : "currency",
+      "type" : "string",
+      "required" : true,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1"
+    }, {
+      "name" : "meta",
+      "type" : "object",
+      "required" : false,
+      "constraints" : null,
+      "source" : "Requirement 3.2.1 (Additional information 1 & 2)"
+    } ]
+  } ],
+  "nonFunctional" : {
+    "security" : "All API communication is online and assumed to be secure (e.g., HTTPS). Strict control over data (e.g., status updates only for beneficiaries), maker-checker controls for file-based operations, SHA256 hashing for sensitive data like Aadhaar, and rule ownership logic for Rule ID updates ensure data integrity and restricted access. NPCI-NET connectivity implies secure network access. Proprietary information is protected by intellectual property laws.",
+    "rateLimiting" : null,
+    "observability" : "The solution incorporates an 'auditable exchange of information'. Dedicated 'Check Transaction' and 'Heartbeat' APIs enable monitoring of transaction status (especially in case of timeouts) and overall system health between participating entities (Government, Unified Layer, Banks)."
+  }
+}

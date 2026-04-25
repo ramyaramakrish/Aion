@@ -13,10 +13,14 @@ spring:
       base-url: http://localhost:11434
       chat:
         options:
-          model: llama3.2
+          model: llama3.2:1b
       embedding:
         options:
           model: nomic-embed-text
 
 aion:
   output-dir: ./Output
+  documents-dir: ./Documents
+  doc-buddy-similarity-threshold: 0.6
+  gemini-api-key: ${GEMINI_API_KEY:}
+  gemini-model: gemini-1.5-flash

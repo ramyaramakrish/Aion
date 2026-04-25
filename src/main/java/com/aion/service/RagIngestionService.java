@@ -14,6 +14,11 @@ import java.util.Map;
 @Service
 public class RagIngestionService {
 
+    private static final int CHUNK_SIZE = 2000;
+    private static final int MIN_CHUNK_SIZE_CHARS = 350;
+    private static final int MIN_CHUNK_LENGTH_TO_EMBED = 10;
+    private static final int MAX_NUM_CHUNKS = 120;
+
     private final EmbeddingModel embeddingModel;
 
     public RagIngestionService(EmbeddingModel embeddingModel) {
@@ -31,7 +36,13 @@ public class RagIngestionService {
             return new Document(u.text(), meta);
         }).toList();
 
-        TokenTextSplitter splitter = new TokenTextSplitter();
+        TokenTextSplitter splitter = new TokenTextSplitter(
+                CHUNK_SIZE,
+                MIN_CHUNK_SIZE_CHARS,
+                MIN_CHUNK_LENGTH_TO_EMBED,
+                MAX_NUM_CHUNKS,
+                true
+        );
         List<Document> chunks = splitter.apply(sourceDocs);
 
         SimpleVectorStore store = SimpleVectorStore.builder(embeddingModel).build();

@@ -11,6 +11,8 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Locale;
 import java.util.Set;
 
@@ -28,6 +30,17 @@ public class DocumentParsingService {
             throw new IllegalArgumentException("Each selected file must be non-empty");
         }
         String name = file.getOriginalFilename();
+        validateFileName(name);
+    }
+
+    public void validatePath(Path path) {
+        if (path == null || !Files.isRegularFile(path)) {
+            throw new IllegalArgumentException("Document path is invalid: " + path);
+        }
+        validateFileName(path.getFileName() != null ? path.getFileName().toString() : null);
+    }
+
+    private void validateFileName(String name) {
         if (name == null || !hasAllowedExtension(name.toLowerCase(Locale.ROOT))) {
             throw new IllegalArgumentException(
                     "Unsupported file type. Allowed: PDF, Word (.doc/.docx), Excel (.xls/.xlsx): " + name);
@@ -51,6 +64,23 @@ public class DocumentParsingService {
         String text = handler.toString();
         if (text == null || text.isBlank()) {
             throw new IOException("No extractable text from: " + file.getOriginalFilename());
+        }
+        return text;
+    }
+
+    public String extractText(Path path) throws IOException {
+        validatePath(path);
+        BodyContentHandler handler = new BodyContentHandler(-1);
+        Metadata metadata = new Metadata();
+        ParseContext context = new ParseContext();
+        try (InputStream inputStream = Files.newInputStream(path)) {
+            parser.parse(inputStream, handler, metadata, context);
+        } catch (SAXException | TikaException e) {
+            throw new IOException("Could not parse document: " + path.getFileName(), e);
+        }
+        String text = handler.toString();
+        if (text == null || text.isBlank()) {
+            throw new IOException("No extractable text from: " + path.getFileName());
         }
         return text;
     }

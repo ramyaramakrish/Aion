@@ -21,9 +21,11 @@ public class ApiGenerationController {
     }
 
     @PostMapping(value = "/api/generate", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> generate(@RequestParam("files") MultipartFile[] files) {
+    public ResponseEntity<?> generate(
+            @RequestParam("files") MultipartFile[] files,
+            @RequestParam(value = "fastMode", defaultValue = "true") boolean fastMode) {
         try {
-            GenerationResult result = apiGenerationService.generate(files);
+            GenerationResult result = apiGenerationService.generate(files, fastMode);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("ok", false, "error", e.getMessage()));

@@ -78,6 +78,84 @@ public class ApiSpecAgentService {
             Fill arrays with as many items as the documents justify; use [] when none apply.
             """;
 
+    private static final String USER_PROMPT_WITH_INLINE_CONTEXT_TEMPLATE = """
+            Retrieved context comes from requirement documents (BRD, understanding notes, Excel data dictionaries).
+
+            Source filenames: %s
+
+            Context extracted from uploads:
+            %s
+
+            Return JSON with this exact structure (types indicated in comments for you; output valid JSON only):
+            {
+              "meta": {
+                "title": "string",
+                "version": "string semver style",
+                "sources": [ "string filenames" ]
+              },
+              "summary": "string executive summary of the API scope",
+              "apis": [
+                {
+                  "name": "string logical API name",
+                  "basePath": "string e.g. /api/v1/orders",
+                  "description": "string",
+                  "operations": [
+                    {
+                      "method": "GET|POST|PUT|PATCH|DELETE",
+                      "path": "string relative path",
+                      "summary": "string",
+                      "request": {
+                        "contentType": "string",
+                        "queryParams": [ { "name": "string", "type": "string", "required": true, "description": "string" } ],
+                        "pathParams": [ { "name": "string", "type": "string", "description": "string" } ],
+                        "bodySchema": { "description": "string", "exampleFields": { } }
+                      },
+                      "responses": {
+                        "200": { "description": "string", "bodySchema": { } }
+                      },
+                      "errors": [ { "status": 400, "description": "string" } ]
+                    }
+                  ]
+                }
+              ],
+              "dataModels": [
+                {
+                  "name": "string entity name",
+                  "description": "string",
+                  "fields": [
+                    { "name": "string", "type": "string", "required": true, "constraints": "string or null", "source": "string document hint" }
+                  ]
+                }
+              ],
+              "nonFunctional": {
+                "security": "string or null",
+                "rateLimiting": "string or null",
+                "observability": "string or null"
+              }
+            }
+
+            Fill arrays with as many items as the documents justify; use [] when none apply.
+            """;
+
+    private static final String REPAIR_PROMPT_TEMPLATE = """
+            You are fixing a JSON API specification to match a required schema.
+
+            Input JSON (may have wrong/missing keys):
+            %s
+
+            Return one valid JSON object with EXACT top-level keys:
+            - meta
+            - summary
+            - apis
+            - dataModels
+            - nonFunctional
+
+            Rules:
+            - Preserve useful information from input JSON.
+            - If unknown, use null or [].
+            - Do not include markdown or explanations.
+            """;
+
     private final ChatModel chatModel;
 
     public ApiSpecAgentService(ChatModel chatModel) {
@@ -87,7 +165,7 @@ public class ApiSpecAgentService {
     public String generateApiSpecJson(VectorStore vectorStore, String filenamesJoined) {
         var advisor = QuestionAnswerAdvisor.builder(vectorStore)
                 .searchRequest(SearchRequest.builder()
-                        .topK(16)
+                        .topK(8)
                         .similarityThreshold(0.2)
                         .build())
                 .build();
@@ -103,6 +181,32 @@ public class ApiSpecAgentService {
                 .call()
                 .content();
 
+        return JsonSpecExtractor.extractJsonObject(raw);
+    }
+
+    public String generateApiSpecJsonFromInlineContext(String filenamesJoined, String contextText) {
+        String userMessage = USER_PROMPT_WITH_INLINE_CONTEXT_TEMPLATE.formatted(filenamesJoined, contextText);
+
+        String raw = ChatClient.builder(chatModel)
+                .build()
+                .prompt()
+                .system(SYSTEM_PROMPT)
+                .user(userMessage)
+                .call()
+                .content();
+
+        return JsonSpecExtractor.extractJsonObject(raw);
+    }
+
+    public String repairApiSpecJsonToSchema(String candidateJson) {
+        String userMessage = REPAIR_PROMPT_TEMPLATE.formatted(candidateJson);
+        String raw = ChatClient.builder(chatModel)
+                .build()
+                .prompt()
+                .system(SYSTEM_PROMPT)
+                .user(userMessage)
+                .call()
+                .content();
         return JsonSpecExtractor.extractJsonObject(raw);
     }
 }

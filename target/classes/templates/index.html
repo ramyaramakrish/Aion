@@ -46,6 +46,30 @@
             color: var(--muted);
         }
         .hint { font-size: 0.85rem; color: var(--muted); }
+        .mode-row {
+            margin-top: 0.9rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.6rem;
+            color: var(--text);
+        }
+        .mode-row input[type=checkbox] {
+            margin-top: 0.2rem;
+            accent-color: var(--accent);
+        }
+        .mode-row .mode-copy { display: flex; flex-direction: column; gap: 0.2rem; }
+        textarea {
+            width: 100%;
+            min-height: 92px;
+            resize: vertical;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: rgba(0,0,0,.2);
+            color: var(--text);
+            padding: 0.65rem 0.75rem;
+            font-family: inherit;
+            line-height: 1.4;
+        }
         button {
             margin-top: 1rem;
             padding: 0.65rem 1.25rem;
@@ -70,6 +94,11 @@
             overflow: auto;
         }
         .paths { font-size: 0.9rem; color: var(--muted); margin: 0.5rem 0 1rem; white-space: pre-line; }
+        .source {
+            font-size: 0.82rem;
+            color: var(--accent);
+            margin: 0 0 0.5rem;
+        }
         .err { color: #ff8a8a; font-size: 0.95rem; }
         .pill {
             display: inline-block;
@@ -98,7 +127,14 @@
             <span>Documents</span>
             <input id="files" type="file" multiple="multiple"
                    accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"/>
-            <span class="hint">Multiple files supported. Ensure Ollama is running with <code>llama3.2</code> and <code>nomic-embed-text</code>.</span>
+            <span class="hint">Multiple files supported. Ensure Ollama is running with <code>llama3.2:1b</code> and <code>nomic-embed-text</code>.</span>
+        </label>
+        <label class="mode-row" for="fastMode">
+            <input id="fastMode" type="checkbox" checked="checked"/>
+            <span class="mode-copy">
+                <strong>Fast mode</strong>
+                <span class="hint">ON = faster single-pass generation (no embeddings). OFF = higher-quality RAG (slower).</span>
+            </span>
         </label>
         <button type="button" id="run">Generate API specification</button>
     </div>
@@ -109,14 +145,36 @@
         <pre id="jsonOut"></pre>
     </div>
 
+    <div class="card">
+        <h2 style="margin:0 0 0.75rem;font-size:1.1rem;">Doc Buddy</h2>
+        <p class="hint" style="margin-top: 0;">
+            Ask questions from files inside the <code>Documents</code> folder. If not found locally, Doc Buddy falls back to Gemini AI.
+        </p>
+        <label for="buddyQuestion" class="hint" style="display:block;margin-bottom:0.35rem;">Your question</label>
+        <textarea id="buddyQuestion" placeholder="Example: What are the key onboarding API requirements?"></textarea>
+        <button type="button" id="askBuddy">Ask Doc Buddy</button>
+    </div>
+
+    <div class="card" id="buddyOutPanel" hidden>
+        <h2 style="margin:0 0 0.75rem;font-size:1.1rem;">Doc Buddy Answer</h2>
+        <div class="source" id="buddySource"></div>
+        <pre id="buddyAnswer"></pre>
+    </div>
+
     <p id="err" class="err" hidden></p>
 </div>
 <script>
     const filesEl = document.getElementById('files');
+    const fastModeEl = document.getElementById('fastMode');
     const runBtn = document.getElementById('run');
     const outPanel = document.getElementById('outPanel');
     const jsonOut = document.getElementById('jsonOut');
     const pathsEl = document.getElementById('paths');
+    const buddyQuestionEl = document.getElementById('buddyQuestion');
+    const askBuddyBtn = document.getElementById('askBuddy');
+    const buddyOutPanel = document.getElementById('buddyOutPanel');
+    const buddySourceEl = document.getElementById('buddySource');
+    const buddyAnswerEl = document.getElementById('buddyAnswer');
     const errEl = document.getElementById('err');
 
     runBtn.addEventListener('click', async () => {
@@ -131,6 +189,7 @@
         for (const f of filesEl.files) {
             fd.append('files', f);
         }
+        fd.append('fastMode', fastModeEl.checked ? 'true' : 'false');
         runBtn.disabled = true;
         try {
             const res = await fetch('/api/generate', { method: 'POST', body: fd });
@@ -150,6 +209,37 @@
             errEl.hidden = false;
         } finally {
             runBtn.disabled = false;
+        }
+    });
+
+    askBuddyBtn.addEventListener('click', async () => {
+        errEl.hidden = true;
+        buddyOutPanel.hidden = true;
+        const question = buddyQuestionEl.value.trim();
+        if (!question) {
+            errEl.textContent = 'Enter a question for Doc Buddy.';
+            errEl.hidden = false;
+            return;
+        }
+        askBuddyBtn.disabled = true;
+        try {
+            const res = await fetch('/api/doc-buddy/ask', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || res.statusText);
+            }
+            buddySourceEl.textContent = 'Source: ' + (data.source || 'Unknown');
+            buddyAnswerEl.textContent = data.answer || '';
+            buddyOutPanel.hidden = false;
+        } catch (e) {
+            errEl.textContent = e.message || String(e);
+            errEl.hidden = false;
+        } finally {
+            askBuddyBtn.disabled = false;
         }
     });
 </script>
